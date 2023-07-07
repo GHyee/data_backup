@@ -4,7 +4,9 @@ from typing import List, Tuple
 import random
 
 
-def connect_to_database(host: str, port: int, database: str, user: str, password: str) -> psycopg2.extensions.connection:
+def connect_to_database(
+        host: str, port: int, database: str, user: str, password: str
+        ) -> psycopg2.extensions.connection:
     """
     Connect to the PostgreSQL database.
 
@@ -31,7 +33,11 @@ def connect_to_database(host: str, port: int, database: str, user: str, password
         print("Error connecting to the database:", e)
 
 
-def get_primary_key_values(connection: psycopg2.extensions.connection, table_name: str, primary_key_field: str) -> List[Tuple]:
+def get_primary_key_values(
+        connection: psycopg2.extensions.connection,
+        table_name: str,
+        primary_key_field: str
+        ) -> List[Tuple]:
     """
     Retrieve the primary key values from the specified table.
 
@@ -59,7 +65,36 @@ def get_primary_key_values(connection: psycopg2.extensions.connection, table_nam
         print("Error retrieving primary key values:", e)
 
 
-def backup_records(connection: psycopg2.extensions.connection, table_name: str, backup_table_name: str, primary_key_field: str, primary_key_values: List[Tuple]) -> None:
+def get_table_names(connection: psycopg2.extensions.connection) -> List[str]:
+    """
+    Retrieves the list of table names in the database.
+
+    Args:
+        connection (psycopg2.extensions.connection): The database connection object.
+
+    Returns:
+        List[str]: The list of table names.
+    """
+    try:
+        cursor = connection.cursor()
+
+        # Retrieve the list of table names
+        cursor.execute("SELECT table_name FROM information_schema.tables WHERE table_schema = 'public'")
+        table_names = [row[0] for row in cursor.fetchall()]
+
+        cursor.close()
+        return table_names
+    except psycopg2.Error as e:
+        print("Error retrieving table names:", e)
+
+
+def backup_records(
+        connection: psycopg2.extensions.connection,
+        table_name: str,
+        backup_table_name: str,
+        primary_key_field: str,
+        primary_key_values: List[Tuple]
+        ) -> None:
     """
     Safely backs up the identified records to a separate backup table.
 
@@ -72,11 +107,23 @@ def backup_records(connection: psycopg2.extensions.connection, table_name: str, 
         cursor = connection.cursor()
 
         # Create a backup table with the same structure as the original table
-        cursor.execute(sql.SQL("CREATE TABLE IF NOT EXISTS {} (LIKE {} INCLUDING ALL)").format(
+        # Check if the target table name already exists
+        table_names = get_table_names(connection)
+        duplicate_exists = False
+        version = 1
+        while backup_table_name in table_names:
+            duplicate_exists = True
+            backup_table_name = f"{backup_table_name}_v{version}"
+            version += 1
+        if duplicate_exists:
+          print(f"Backup table name already exists. It will be renamed to {backup_table_name}.")
+
+        # Create the target table with the same structure as the source table
+        cursor.execute(sql.SQL("CREATE TABLE {} (LIKE {})").format(
             sql.Identifier(backup_table_name),
             sql.Identifier(table_name)
         ))
-        import pdb; pdb.set_trace()
+
         # Copy the identified records into the backup table
         for primary_key_value in primary_key_values:
             cursor.execute(sql.SQL("INSERT INTO {} SELECT * FROM {} WHERE {} = %s").format(
@@ -84,7 +131,6 @@ def backup_records(connection: psycopg2.extensions.connection, table_name: str, 
                 sql.Identifier(table_name),
                 sql.Identifier(primary_key_field)
             ), primary_key_value)
-
         connection.commit()
         cursor.close()
         print(f"These records {primary_key_values} are backed up successfully to {backup_table_name}.")
@@ -93,7 +139,12 @@ def backup_records(connection: psycopg2.extensions.connection, table_name: str, 
         print("Error backing up records:", e)
 
 
-def remove_records(connection: psycopg2.extensions.connection, table_name: str,  primary_key_field: str, primary_key_values: List[Tuple]) -> None:
+def remove_records(
+        connection: psycopg2.extensions.connection,
+        table_name: str,
+        primary_key_field: str,
+        primary_key_values: List[Tuple]
+        ) -> None:
     """
     Remove records from the original table.
 
@@ -122,7 +173,13 @@ def remove_records(connection: psycopg2.extensions.connection, table_name: str, 
         print("Error backing up and removing records:", e)
 
 
-def restore_records(connection: psycopg2.extensions.connection, table_name: str, backup_table_name: str, primary_key_field: str, primary_key_values: List[Tuple]) -> None:
+def restore_records(
+        connection: psycopg2.extensions.connection,
+        table_name: str,
+        backup_table_name: str,
+        primary_key_field: str,
+        primary_key_values: List[Tuple]
+        ) -> None:
     """
     Restores the identified records from the backup table to the original table.
 
@@ -166,14 +223,11 @@ if __name__ == "__main__":
     primary_key_values = get_primary_key_values(connection, table_name, primary_key_field)
 
     # Randomly sample records for simulation
-    sampled_primary_keys = random.sample(primary_key_values, sample_size)
+    sampled_primary_keys = sorted(random.sample(primary_key_values, sample_size))
 
     # Backup and remove the randomly sampled records
     backup_records(connection, table_name, backup_table_name, primary_key_field, sampled_primary_keys)
-    import pdb; pdb.set_trace()
     remove_records(connection, table_name, primary_key_field, sampled_primary_keys)
-    pdb.set_trace()
     restore_records(connection, table_name, backup_table_name, primary_key_field, sampled_primary_keys)
-    pdb.set_trace()
     # Close the database connection
     connection.close()
