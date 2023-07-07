@@ -55,12 +55,31 @@ Install the required dependency.
 pip install -r requirements.txt
 ```
 
+Update the relevant parameters in `simulate_data_loss.py`.
+```python
+# Connect to the database
+connection = connect_to_database("localhost", 5432, "mydatabase", "myuser", "mypassword")
+
+# Specify the table name, primary key field, and the number of records to sample
+table_name = "customers"
+backup_table_name = "customers_backup"
+primary_key_field = "customer_id"
+sample_size = 10
+```
+- `table_name` is the name of the table created in the mock database.
+- `backup_table_name` is the name of the table to back up the records to.
+- `primary_key_field` is the name of the field set as primary key when creating the mock table.
+- `sample_size` is the number of records to remove. It should not be more than 100 as the mock database only have 100 records.
+Note: Ideally, the connection details and the simulation parameters should be stored separately in a configuration file. It can then be read in the python script during runtime. However, to keep the setup simple for this assessment, the parameters are set directly in the script.
+
+
 Execute the below code to simulate the data loss and recovery process.
 ```bash
 python -m simulate_data_loss                                                      ─╯
 ```
 
 The python script will execute the following actions:
+
 1. Connect to database using supplied credentials
 2. Get list of primary key values for the specified table
 3. Randomly sample a list of primary key values which will be removed later on
@@ -78,4 +97,5 @@ Backup table name already exists. It will be renamed to customers_backup_v1.
 These records [(104,), (118,), (115,), (125,), (108,), (181,), (117,), (126,), (156,), (196,)] are backed up successfully to customers_backup_v1.
 Records [(104,), (118,), (115,), (125,), (108,), (181,), (117,), (126,), (156,), (196,)] removed successfully.
 Records [(104,), (118,), (115,), (125,), (108,), (181,), (117,), (126,), (156,), (196,)] restored successfully.
+```
 ```
