@@ -60,6 +60,17 @@ Execute the below code to simulate the data loss and recovery process.
 python -m simulate_data_loss                                                      ─╯
 ```
 
+The python script will execute the following actions:
+1. Connect to database using supplied credentials
+2. Get list of primary key values for the specified table
+3. Randomly sample a list of primary key values which will be removed later on
+4. Get list of tables in the database
+5. Check if the specified backup table name already exists. If so, it will be appended with the suffix `_v{version}` where version is a counter that makes the table name unique
+6. Create the backup table
+7. Insert the sampled list of records from the specified table to the backup table
+8. Remove the sampled list of records from the specified table
+9. Restore the sampled list of records from the backup table to the specified 
+
 Sample output:
 ```bash
 python -m simulate_data_loss
