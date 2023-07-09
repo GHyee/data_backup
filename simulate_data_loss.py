@@ -101,6 +101,8 @@ def backup_records(
     Args:
         connection (psycopg2.extensions.connection): The database connection object.
         table_name (str): Name of the table containing the records.
+        backup_table_name (str): Name of the table to back up the records.
+        primary_key_field (str): Name of the field designated as primary key.   
         primary_key_values (List[Tuple]): List of primary key values identifying the records to back up.
     """
     try:
@@ -187,6 +189,7 @@ def restore_records(
         connection (psycopg2.extensions.connection): The database connection object.
         table_name (str): Name of the table to restore the records to.
         backup_table_name (str): Name of the backup table.
+        primary_key_field (str): Name of the primary key field.
         primary_key_values (List[Tuple]): List of primary key values identifying the records to restore.
     """
     try:
