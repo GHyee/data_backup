@@ -98,4 +98,13 @@ These records [(104,), (118,), (115,), (125,), (108,), (181,), (117,), (126,), (
 Records [(104,), (118,), (115,), (125,), (108,), (181,), (117,), (126,), (156,), (196,)] removed successfully.
 Records [(104,), (118,), (115,), (125,), (108,), (181,), (117,), (126,), (156,), (196,)] restored successfully.
 ```
-```
+
+
+# Ideas for Improvement
+
+1. Input Validation and Sanitization: Implement input validation and sanitization techniques to ensure that user-provided inputs, such as table names and primary key fields, are properly validated and sanitized before being used in SQL queries. This can help prevent SQL injection attacks and improve overall security.
+
+2. Configurable Backup Strategy: Provide options for a more configurable backup strategy, such as specifying the backup table structure, defining backup file locations, or implementing differential backups. This allows for greater flexibility and customization based on specific backup requirements.
+
+3. Automated Testing: Consider implementing automated testing using a testing framework like pytest to ensure the correctness of the script across different scenarios and edge cases. This allows for easier regression testing and maintaining code quality.
+
